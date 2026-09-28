@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나이키 미니 상점</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f4f5f7;
+            color: #111;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 인증 컨테이너 (로그인 / 회원가입) */
+        .auth-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #111;
+        }
+        .auth-card {
+            background-color: #fff;
+            padding: 50px 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .auth-logo {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 30px;
+            color: #111;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: left;
+        }
+        .auth-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .auth-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #444;
+        }
+        .auth-input {
+            padding: 14px 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .auth-input:focus { border-color: #111; }
+        .auth-btn {
+            background-color: #111;
+            color: #fff;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .auth-btn:hover { background-color: #333; }
+        .auth-switch {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .auth-switch span {
+            color: #111;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* 메인 상점 앱 컨테이너 */
+        .app-container {
+            background-color: #fff;
+            width: 100vw;
+            height: 100vh;
+            display: none; /* 기본 숨김 (JS로 제어) */
+            overflow: hidden;
+        }
+
+        /* 왼쪽 사이드바 메뉴 */
+        .sidebar {
+            width: 280px;
+            background-color: #111;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 24px;
+            flex-shrink: 0;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+        .sidebar-top .logo {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-greeting {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #222;
+        }
+        .user-greeting b { color: #fff; }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .menu-item {
+            padding: 16px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            color: #aaa;
+            transition: all 0.2s;
+        }
+        .menu-item:hover, .menu-item.active {
+            background-color: #222;
+            color: #fff;
+        }
+        .sidebar-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .sidebar-balance {
+            background-color: #222;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .sidebar-balance .label {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+        .sidebar-balance .amount {
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .btn-logout {
+            background: transparent;
+            border: 1px solid #444;
+            color: #aaa;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { border-color: #fff; color: #fff; }
+
+        /* 오른쪽 컨텐츠 영역 */
+        .content-area {
+            flex: 1;
+            padding: 60px 80px;
+            overflow-y: auto;
+            background-color: #fafafa;
+        }
+        .tab-content {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #111;
+        }
+
+        /* 상품 구매창 스타일 */
+        .product-showcase {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 20px;
+            padding: 50px 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            gap: 50px;
+        }
+        .product-info-group {
+            flex: 1;
+            text-align: left;
+        }
+        .product-image {
+            width: 260px;
+            height: 260px;
+            background-color: #f5f5f5;
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 110px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
+            flex-shrink: 0;
+        }
+        .product-name {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #111;
+        }
+        .product-desc {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        .product-price {
+            font-size: 28px;
+            font-weight: 800;
+            color: #e53935;
+            margin-bottom: 35px;
+        }
+        .btn {
+            background-color: #111;
+            color: #fff;
+            border: none;
+            padding: 18px 36px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn:hover { background-color: #333; }
+        .btn:active { transform: scale(0.98); }
+
+        /* 충전창 스타일 */
+        .charge-form {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 20px;
+            padding: 50px 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            max-width: 800px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .form-label {
+            font-weight: 700;
+            font-size: 16px;
+            color: #333;
+        }
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .method-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            background: #fff;
+            transition: all 0.2s;
+        }
+        .method-card input {
+            display: none;
+        }
+        .method-card.selected {
+            border-color: #111;
+            background-color: #111;
+            color: #fff;
+        }
+        .charge-input {
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 18px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .charge-input:focus { border-color: #111; }
+
+        /* 테이블 공통 (내역용) */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #eaeaea;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+        .history-table th, .history-table td {
+            padding: 20px 24px;
+            text-align: left;
+            font-size: 16px;
+        }
+        .history-table th {
+            background-color: #f7f7f9;
+            font-weight: 700;
+            color: #555;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .history-table td {
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 80px 20px;
+            color: #888;
+            font-size: 18px;
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #eaeaea;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+
+        /* 모달창 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .modal-icon { font-size: 60px; margin-bottom: 20px; }
+        .modal-message { font-size: 18px; font-weight: 500; margin-bottom: 30px; line-height: 1.6; }
+        .btn-modal-close {
+            background-color: #111; color: #fff; padding: 14px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%;
+        }
+
+        @media (max-width: 968px) {
+            body { height: auto; overflow: auto; }
+            .app-container { flex-direction: column; height: auto; min-height: 100vh; }
+            .sidebar { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; padding: 20px; }
+            .sidebar-top .logo { margin-bottom: 0; font-size: 18px; }
+            .user-greeting, .sidebar-bottom { display: none; }
+            .menu-list { flex-direction: row; gap: 8px; }
+            .menu-item { padding: 10px 14px; font-size: 14px; }
+            .content-area { padding: 30px 20px; }
+            .product-showcase { flex-direction: column; text-align: center; padding: 30px; gap: 30px; }
+            .product-info-group { text-align: center; }
+            .payment-methods { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 로그인 / 회원가입 화면 -->
+    <div id="auth-container" class="auth-container">
+        <!-- 로그인 폼 -->
+        <div id="login-box" class="auth-card">
+            <div class="auth-logo">⚡ NIKE MINI SHOP</div>
+            <div class="auth-form">
+                <div class="auth-input-group">
+                    <label class="auth-label">아이디</label>
+                    <input type="text" id="login-id" class="auth-input" placeholder="아이디 입력">
+                </div>
+                <div class="auth-input-group">
+                    <label class="auth-label">비밀번호</label>
+                    <input type="password" id="login-pw" class="auth-input" placeholder="비밀번호 입력">
+                </div>
+                <button class="auth-btn" onclick="handleLogin()">로그인</button>
+            </div>
+            <div class="auth-switch">
+                계정이 없으신가요? <span onclick="toggleAuthMode('signup')">회원가입하기</span>
+            </div>
+        </div>
+
+        <!-- 회원가입 폼 -->
+        <div id="signup-box" class="auth-card" style="display: none;">
+            <div class="auth-logo">⚡ 회원가입</div>
+            <div class="auth-form">
+                <div class="auth-input-group">
+                    <label class="auth-label">사용할 아이디</label>
+                    <input type="text" id="signup-id" class="auth-input" placeholder="아이디 입력">
+                </div>
+                <div class="auth-input-group">
+                    <label class="auth-label">사용할 비밀번호</label>
+                    <input type="password" id="signup-pw" class="auth-input" placeholder="6글자 이상 입력">
+                </div>
+                <button class="auth-btn" onclick="handleSignup()">가입 완료</button>
+            </div>
+            <div class="auth-switch">
+                이미 계정이 있으신가요? <span onclick="toggleAuthMode('login')">로그인하기</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 메인 상점 앱 화면 (로그인 후 표시) -->
+    <div id="app-container" class="app-container">
+        <!-- 왼쪽 사이드바 내비게이션 -->
+        <div class="sidebar">
+            <div class="sidebar-top">
+                <div class="logo">⚡ NIKE SHOP</div>
+                <div class="user-greeting">반갑습니다, <b id="display-username">사용자</b>님!</div>
+                <ul class="menu-list">
+                    <li class="menu-item active" onclick="switchTab('buy', this)">구매창</li>
+                    <li class="menu-item" onclick="switchTab('charge', this)">금액 충전</li>
+                    <li class="menu-item" onclick="switchTab('charge-history', this)">충전 내역</li>
+                    <li class="menu-item" onclick="switchTab('buy-history', this)">구매 내역</li>
+                </ul>
+            </div>
+            <div class="sidebar-bottom">
+                <div class="sidebar-balance">
+                    <div class="label">보유 잔액</div>
+                    <div class="amount"><span id="current-balance">0</span>원</div>
+                </div>
+                <button class="btn-logout" onclick="handleLogout()">로그아웃</button>
+            </div>
+        </div>
+
+        <!-- 오른쪽 컨텐츠 영역 -->
+        <div class="content-area">
+            
+            <!-- 구매창 탭 -->
+            <div id="tab-buy" class="tab-content active">
+                <div class="section-title">👟 상품 구매</div>
+                <div class="product-showcase">
+                    <div class="product-image">👟</div>
+                    <div class="product-info-group">
+                        <div class="product-name">나이키 에어 스니커즈</div>
+                        <div class="product-desc">최상의 쿠셔닝과 트렌디한 디자인의 프리미엄 스니커즈를 지금 바로 만나보세요.</div>
+                        <div class="product-price">70,000원</div>
+                        <button class="btn" onclick="buyProduct()">바로 구매하기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 금액 충전 탭 -->
+            <div id="tab-charge" class="tab-content">
+                <div class="section-title">💰 금액 충전하기</div>
+                <div class="charge-form">
+                    <div class="form-group">
+                        <label class="form-label">충전 수단 선택</label>
+                        <div class="payment-methods">
+                            <label class="method-card selected" onclick="selectMethod(this)">
+                                <input type="radio" name="payMethod" value="구글 기프트카드" checked> 구글 기프트카드
+                            </label>
+                            <label class="method-card" onclick="selectMethod(this)">
+                                <input type="radio" name="payMethod" value="무통장 입금"> 무통장 입금
+                            </label>
+                            <label class="method-card" onclick="selectMethod(this)">
+                                <input type="radio" name="payMethod" value="문화상품권"> 문화상품권
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="charge-amount">충전 금액 입력 (원)</label>
+                        <input type="number" id="charge-amount" class="charge-input" placeholder="예: 50000" min="1" max="3000000000">
+                    </div>
+                    <button class="btn" onclick="chargeMoney()">충전하기</button>
+                </div>
+            </div>
+
+            <!-- 충전 내역 탭 -->
+            <div id="tab-charge-history" class="tab-content">
+                <div class="section-title">📋 충전 내역</div>
+                <div id="charge-history-container">
+                    <div class="empty-history">아직 충전 내역이 없습니다.</div>
+                </div>
+            </div>
+
+            <!-- 구매 내역 탭 -->
+            <div id="tab-buy-history" class="tab-content">
+                <div class="section-title">📦 구매 내역</div>
+                <div id="buy-history-container">
+                    <div class="empty-history">아직 구매 내역이 없습니다.</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 결과 알림 모달창 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-icon" id="modal-icon">🎉</div>
+            <div class="modal-message" id="modal-message">알림 메시지</div>
+            <button class="btn-modal-close" onclick="closeModal()">확인</button>
+        </div>
+    </div>
+
+    <script>
+        const productPrice = 70000;
+        const productName = "나이키 에어 스니커즈";
+
+        // 로컬 스토리지에서 회원 데이터 및 현재 로그인 유저 정보 로드
+        let users = JSON.parse(localStorage.getItem('nike_users')) || { "test": "123456" };
+        let currentUser = localStorage.getItem('nike_current_user') || null;
+
+        // 사용자별 데이터 로드 함수
+        function loadUserData() {
+            if (!currentUser) return;
+            
+            let balances = JSON.parse(localStorage.getItem('nike_balances')) || {};
+            let chargeData = JSON.parse(localStorage.getItem('nike_charges')) || {};
+            let buyData = JSON.parse(localStorage.getItem('nike_buys')) || {};
+
+            window.balance = balances[currentUser] || 0;
+            window.chargeHistories = chargeData[currentUser] || [];
+            window.buyHistories = buyData[currentUser] || [];
+
+            updateBalanceDisplay();
+            renderChargeHistory();
+            renderBuyHistory();
+        }
+
+        // 사용자별 데이터 저장 함수
+        function saveUserData() {
+            if (!currentUser) return;
+
+            let balances = JSON.parse(localStorage.getItem('nike_balances')) || {};
+            let chargeData = JSON.parse(localStorage.getItem('nike_charges')) || {};
+            let buyData = JSON.parse(localStorage.getItem('nike_buys')) || {};
+
+            balances[currentUser] = window.balance;
+            chargeData[currentUser] = window.chargeHistories;
+            buyData[currentUser] = window.buyHistories;
+
+            localStorage.setItem('nike_balances', JSON.stringify(balances));
+            localStorage.setItem('nike_charges', JSON.stringify(chargeData));
+            localStorage.setItem('nike_buys', JSON.stringify(buyData));
+        }
+
+        // 페이지 로드 시 로그인 상태 확인
+        window.onload = function() {
+            if (currentUser && users[currentUser]) {
+                document.getElementById('display-username').innerText = currentUser;
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                loadUserData();
+            }
+        };
+
+        // 로그인 / 회원가입 화면 전환
+        function toggleAuthMode(mode) {
+            if (mode === 'signup') {
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('signup-box').style.display = 'block';
+            } else {
+                document.getElementById('signup-box').style.display = 'none';
+                document.getElementById('login-box').style.display = 'block';
+            }
+        }
+
+        // 회원가입 처리 (비밀번호 6글자 이상 제한)
+        function handleSignup() {
+            const id = document.getElementById('signup-id').value.trim();
+            const pw = document.getElementById('signup-pw').value.trim();
+
+            if (!id || !pw) {
+                showModal("❌", "아이디와 비밀번호를 모두 입력해주세요.");
+                return;
+            }
+            if (pw.length < 6) {
+                showModal("❌", "비밀번호는 6글자 이상이어야 합니다.");
+                return;
+            }
+            if (users[id]) {
+                showModal("❌", "이미 존재하는 아이디입니다.");
+                return;
+            }
+
+            users[id] = pw;
+            localStorage.setItem('nike_users', JSON.stringify(users));
+
+            showModal("✅", "회원가입이 완료되었습니다!<br>로그인해주세요.");
+            toggleAuthMode('login');
+            document.getElementById('signup-id').value = '';
+            document.getElementById('signup-pw').value = '';
+        }
+
+        // 로그인 처리
+        function handleLogin() {
+            const id = document.getElementById('login-id').value.trim();
+            const pw = document.getElementById('login-pw').value.trim();
+
+            if (!users[id] || users[id] !== pw) {
+                showModal("❌", "아이디 또는 비밀번호가 일치하지 않습니다.");
+                return;
+            }
+
+            currentUser = id;
+            localStorage.setItem('nike_current_user', currentUser);
+            document.getElementById('display-username').innerText = currentUser;
+            
+            // 화면 전환 (인증 -> 상점 메인)
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+
+            loadUserData();
+
+            document.getElementById('login-id').value = '';
+            document.getElementById('login-pw').value = '';
+        }
+
+        // 로그아웃 처리
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('nike_current_user');
+
+            window.balance = 0;
+            window.chargeHistories = [];
+            window.buyHistories = [];
+
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'flex';
+        }
+
+        // 탭 전환 함수
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // 결제 수단 선택 UI 처리
+        function selectMethod(cardElement) {
+            document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
+            cardElement.classList.add('selected');
+            cardElement.querySelector('input').checked = true;
+        }
+
+        // 잔액 표시 갱신
+        function updateBalanceDisplay() {
+            document.getElementById('current-balance').innerText = (window.balance || 0).toLocaleString();
+        }
+
+        // 날짜 포맷 함수
+        function getFormattedDate() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+        }
+
+        // 충전 실행 기능
+        function chargeMoney() {
+            const inputVal = document.getElementById('charge-amount').value;
+            const inputAmount = parseInt(inputVal);
+            const selectedMethod = document.querySelector('input[name="payMethod"]:checked').value;
+            const maxLimit = 3000000000; // 30억
+
+            if (isNaN(inputAmount) || inputAmount < 1) {
+                showModal("❌", "정확한 충전 금액을 입력해주세요.");
+                return;
+            }
+            if (inputAmount > maxLimit) {
+                showModal("❌", "최대 충전 가능 금액은 30억 원입니다.");
+                return;
+            }
+
+            window.balance = (window.balance || 0) + inputAmount;
+            updateBalanceDisplay();
+
+            // 충전 내역 추가
+            if (!window.chargeHistories) window.chargeHistories = [];
+            window.chargeHistories.unshift({
+                date: getFormattedDate(),
+                method: selectedMethod,
+                amount: inputAmount
+            });
+            renderChargeHistory();
+            saveUserData();
+
+            document.getElementById('charge-amount').value = '';
+            showModal("✅", `[${selectedMethod}]<br>${inputAmount.toLocaleString()}원이 성공적으로 충전되었습니다!`);
+        }
+
+        // 제품 구매 기능
+        function buyProduct() {
+            if ((window.balance || 0) >= productPrice) {
+                window.balance -= productPrice;
+                updateBalanceDisplay();
+
+                // 구매 내역 추가
+                if (!window.buyHistories) window.buyHistories = [];
+                window.buyHistories.unshift({
+                    date: getFormattedDate(),
+                    name: productName,
+                    price: productPrice
+                });
+                renderBuyHistory();
+                saveUserData();
+
+                showModal("🎉", `나이키 제품 구매 성공!<br>남은 잔액: ${window.balance.toLocaleString()}원`);
+            } else {
+                showModal("❌", `잔액이 부족합니다.<br>먼저 금액을 충전해주세요!`);
+            }
+        }
+
+        // 충전 내역 렌더링
+        function renderChargeHistory() {
+            const container = document.getElementById('charge-history-container');
+            if (!window.chargeHistories || window.chargeHistories.length === 0) {
+                container.innerHTML = `<div class="empty-history">아직 충전 내역이 없습니다.</div>`;
+                return;
+            }
+
+            let html = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>충전일시</th>
+                            <th>충전수단</th>
+                            <th>충전금액</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            window.chargeHistories.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td>${item.method}</td>
+                        <td style="font-weight: bold; color: #2e7d32;">+${item.amount.toLocaleString()}원</td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // 구매 내역 렌더링
+        function renderBuyHistory() {
+            const container = document.getElementById('buy-history-container');
+            if (!window.buyHistories || window.buyHistories.length === 0) {
+                container.innerHTML = `<div class="empty-history">아직 구매 내역이 없습니다.</div>`;
+                return;
+            }
+
+            let html = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>구매일시</th>
+                            <th>상품명</th>
+                            <th>결제금액</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            window.buyHistories.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td>${item.name}</td>
+                        <td style="font-weight: bold; color: #e53935;">-${item.price.toLocaleString()}원</td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // 모달 팝업 제어
+        function showModal(iconSymbol, messageText) {
+            document.getElementById('modal-icon').innerText = iconSymbol;
+            document.getElementById('modal-message').innerHTML = messageText;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
